@@ -2,11 +2,12 @@ bin
 include
 lib
 build
+console/
 __pycache__/
 myvenv/
 venv
 *.pyc
 .project
 *.pyo
-
+*.rdb
 config.py
