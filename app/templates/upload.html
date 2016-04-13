@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% block title %}Results{% endblock %}
+{% block head %}
+{% endblock %}
+{% block content %}
+  {% if error == "fail" %}
+    <div class="alert alert-danger">
+      <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+      <strong>Invalid File</strong> - Make sure you upload a CSV file.
+    </div>
+  {% endif %}
+  <div class="header">
+    <h3 class="text-muted">Upload a File</h3>
+  </div>
+  <hr/>
+  <div>
+    <form action="upload" method="post" enctype="multipart/form-data">
+      <input type="file" name="file"><br />
+      <input type="submit" value="Upload", class="btn btn-default">
+    </form>
+  </div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+{% block title %}Results{% endblock %}
+{% block head %}
+Results
+{% endblock %}
+{% block content %}
+<div class="header">
+	<h3 class="text-muted">Results</h3>
+</div>
+<hr/>
+<div class="table-responsive">
+	<table class="table">
+		<thead>
+			<tr>
+				<th>ID</th>
+				<th>Filename</th>
+				<th>Result File</th>
+				<th>Error File</th>
+				<th>Status</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for scout in Scouts %}
+				<tr>
+					<td>{{ scout.task_id }}</td>
+					<td>{{ scout.filename }}</td>
+				{% if scout.status == 'SUCCESS' %}
+					<td><a href="{{ url_for('download_result_file', result_file=scout.result) }}">{{ scout.result }}</a></td>
+					<td><a href="{{ url_for('download_error_file', error_file=scout.error) }}">{{ scout.error }}</a></td>
+				{% else %}
+					<td>{{ scout.result }}</td>
+					<td>{{ scout.error }}</td>
+				{% endif %}
+					<td class="scout-status">{{ scout.status }}</td>
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	<i>(Only showing 10 most recent scouts)</i>
+</div>
+{% endblock %}

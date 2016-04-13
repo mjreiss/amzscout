@@ -1,0 +1,9 @@
+body {
+    padding-top: 70px;
+}
+
+.table td.new-class {
+	border-width: 2px;
+	color: green;
+	font-weight: bold;
+}

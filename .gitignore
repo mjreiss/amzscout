@@ -1,0 +1,12 @@
+bin
+include
+lib
+build
+__pycache__/
+myvenv/
+venv
+*.pyc
+.project
+*.pyo
+
+config.py

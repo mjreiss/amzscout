@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+{% block title %}Results{% endblock %}
+{% block head %}
+Results
+{% endblock %}
+{% block content %}
+	{% if error == "http" %}
+		<div class="alert alert-danger">
+			<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+			<strong>API Error</strong> - Please wait and try again.
+		</div>
+	{% elif error == "fail" %}
+		{{ e }}
+		<div class="alert alert-danger">
+			<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+			<strong>ASIN Error</strong> - Please try again or use a new ASIN.
+		</div>
+	{% endif %}
+	<div class="header">
+		<h3 class="text-muted">Enter an ASIN or UPC</h3>
+	</div>
+	<hr/>
+    <form action="/search" method="POST">
+        <p class="input-group">
+        	<input type="text" name="asin" class="form-control">
+        </p>
+        <p>
+        	<input type="submit" name="my-form" value="Send" class="btn btn-default">
+        </p>
+    </form>
+{% endblock %}
