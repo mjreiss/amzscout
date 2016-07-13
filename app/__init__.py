@@ -5,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 # setup app
 app = Flask(__name__)
-app.config.from_object('config')
+app.config.from_object('app_config')
 
 app.config['UPLOAD_FOLDER'] = 'app/files/uploads/'
 app.config['ALLOWED_EXTENSIONS'] = set(['csv'])

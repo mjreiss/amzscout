@@ -1,7 +1,7 @@
 import json, urllib, os, time
 from flask import Flask, render_template, jsonify, request, redirect, url_for, send_file, g
 from werkzeug.utils import secure_filename
-from flask_mail import Mail, Message
+# from flask_mail import Mail, Message
 from app.models import Scouts
 from app import app, celery, db
 from app.calc import *
@@ -11,10 +11,6 @@ from app.scout import *
 # For a given file, return whether it's an allowed type or not
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']
-
-def check_status(task):
-	state = init_scout.AsyncResult(task).state
-	return state
 
 @celery.task
 def init_scout(path, result_file, error_file):
@@ -86,10 +82,3 @@ def download_result_file(result_file):
 @app.route('/errors/<error_file>')
 def download_error_file(error_file):
     return send_file('files/errors/' + error_file)
-
-@app.route("/email")
-def send_email():
-	msg = Message('Hello', sender='you@dgoogle.com', recipients=['recipient@recipient_domain.com'])
-	msg.body = "This is the email body"
-	mail.send(msg)
-	return "Sent"

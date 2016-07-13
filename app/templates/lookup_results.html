@@ -30,16 +30,18 @@ Results
 				<th>Total Fees</th>
 				<th>VCF</th>
 				<th>Referral</th>
-				<th>Total</th>
 				<th>Width</th>
 				<th>Height</th>
 				<th>Length</th>
 				<th>Weight</th>
-				<th>Buy Box Price</th>
-				<th>FBA Buy Box</th>
+				<th>Total Offers</th>
 				<th>Total New Offers</th>
 				<th>Total FBA Offers</th>
 				<th>AMZ on Listing</th>
+				<th>Buy Box Price</th>
+				<th>FBA Buy Box</th>
+				<th>BB Feedback Count</th>
+				<th>BB Feedback Rating</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -62,16 +64,18 @@ Results
 				<td>{{ data['fees'] }}</td>
 				<td>{{ data['vcf'] }}</td>
 				<td>{{ data['referral'] }}</td>
-				<td>{{ data['total'] }}</td>
 				<td>{{ data['width'] }}</td>
 				<td>{{ data['height'] }}</td>
 				<td>{{ data['length'] }}</td>
 				<td>{{ data['weight'] }}</td>
+				<td>{{ data['total_offers'] }}</td>
+				<td>{{ data['new_offers'] }}</td>
+				<td>{{ data['total_fba'] }}</td>
+				<td>{{ data['amz_on'] }}</td>
 				<td>{{ data['bb_amt'] }}</td>
 				<td>{{ data['fba'] }}</td>
-				<td>{{ data['new_offers'] }}</td>
-				<td>{{ data['fba_count'] }}</td>
-				<td>{{ data['has_amz'] }}</td>
+				<td>{{ data['feedback_count'] }}</td>
+				<td>{{ data['feedback_rating'] }}</td>
 			</tr>
 		</tbody>
 	</table>

@@ -1,9 +1,9 @@
-import requests, time, bottlenose, math
+import requests, time, bottlenose, math, urllib, csv
 from bs4 import BeautifulSoup
 from amazon_scraper import AmazonScraper # https://github.com/adamlwgriffiths/amazon_scraper
 from decimal import Decimal
 from app.categories import *
-from config import *
+from app_config import *
 
 # Amazon scraper + Amazon API wrapper
 amazon = AmazonScraper(app.config['AMZ_API_KEY'], app.config['AMZ_API_SECRET'], app.config['AMZ_ASSOCIATE'])
@@ -12,7 +12,7 @@ amazon = AmazonScraper(app.config['AMZ_API_KEY'], app.config['AMZ_API_SECRET'], 
 amazon_raw = bottlenose.Amazon(app.config['AMZ_API_KEY'], app.config['AMZ_API_SECRET'], app.config['AMZ_ASSOCIATE'])
 
 def upc_to_asin(upc):
-	time.sleep(1.02)
+	time.sleep(1)
 	p = amazon.lookup(ItemId=upc, IdType='UPC', SearchIndex='All')
 	if type(p) != list:
 		asin = [p.asin]
@@ -24,18 +24,13 @@ def upc_to_asin(upc):
 			count += 1
 	return(asin)
 
-def ean_to_asin(upc):
-	time.sleep(1.02)
-	p = amazon.lookup(ItemId=upc, IdType='EAN', SearchIndex='All')
-	if type(p) != list:
-		asin = [p.asin]
-	else:
-		asin = []
-		count = 0
-		while count <= len(p) - 1:
-			asin.append(p[count].asin)
-			count += 1
-	return(asin)
+# part of run_bulk_asin()
+def get_raw_data(asin):
+	p = amazon.lookup(ItemId=asin, IdType='ASIN', ResponseGroup='Large')
+	time.sleep(0.2)
+	raw_data = amazon_raw.ItemLookup(ItemId=asin, IdType='ASIN', ResponseGroup="Large")
+	soup = BeautifulSoup(raw_data, "lxml")
+	return(p, soup)
 
 def get_attributes(asin):
 	# time.sleep(1)
@@ -57,7 +52,6 @@ def get_attributes(asin):
 	product_group = soup.find('productgroup').string
 	binding = 'Misc.' if binding is None else binding
 	product_group = 'Misc.' if product_group is None else product_group
-
 	# Check if Clothing
 	is_clothing = False
 	for node in soup.findAll('name'):
@@ -96,11 +90,10 @@ def get_attributes(asin):
 		str(weight)
 	)
 
-def get_commission(asin):
-	category, binding = get_attributes(asin)[9:11]
-	pct = get_referral_pct(category, binding)
-	minimum = get_minimum_fee(category, binding)
-	vcf = get_variable_closing_fee(category, binding)
+def get_commission(asin, category, binding, product_type):
+	pct = get_referral_pct(category, binding, product_type)
+	minimum = get_minimum_fee(category, binding, product_type)
+	vcf = get_variable_closing_fee(category, binding, product_type)
 	return((pct/100), minimum, vcf)
 
 def offers_api(asin):
@@ -147,11 +140,10 @@ def offers_scrape(asin):
 		index += 1
 
 	return(amz, fba_count)
-
-	# # Check if Office Products is actually Electronics
-	# for node in soup.findAll('name'):
-	# 	if 'Office Electronics' in node:
-	# 		return('Electronics')
-	# for node in soup.findAll('name'):
-	# 	if 'Industrial & Scientific' in node:
-	# 		return('Electronics')
+	
+# for x in ['096506310071','096506310071','096506310071','096506310071','096506310071','096506310071','096506310071','096506310071','096506310071', '096506310071', '096506310064', '063262939082', '096506310071', '096506310071', '096506310064', '063262939082', '096506310071', '096506310071', '096506310064', '063262939082', '096506310071', '096506310071', '096506310064', '063262939082', '096506310071', '096506310071', '096506310064', '063262939082', '096506310071', '096506310071', '096506310064', '063262939082', '096506310071', '096506310071', '096506310064', '063262939082', '096506310071', '096506310071', '096506310064', '063262939082', '096506310071', '096506310071', '096506310064', '063262939082', '096506310071', '096506310071', '096506310064', '063262939082', '096506310071', '096506310071', '096506310064', '063262939082', '096506310071', '096506310071', '096506310064', '063262939082', '096506310071', '096506310071', '096506310064', '063262939082', '096506310071', '096506310071', '096506310064', '063262939082']:
+# 	try:
+# 		print(upc_to_asin(x))
+# 	except urllib.error.HTTPError:
+# 		print('upc to asin fail: ' + str(1))
+# 		time.sleep(1)

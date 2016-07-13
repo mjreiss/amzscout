@@ -1,30 +1,19 @@
 import datetime, json, math, csv, time
 from decimal import Decimal, ROUND_UP
 from numpy import median
-from app.mws import *
+from app.pa_api import *
+from app.mws_api import *
 
-pick_pack_const = {
-    'standard': Decimal(1.06),
-    'small_oversize': Decimal(4.09),
-    'medium_oversize': Decimal(5.20),
-    'large_oversize': Decimal(8.40),
-    'special_oversize': Decimal(10.53),
-}
-
-# Function for single ASIN lookup in app - app.py
+# Function for single ASIN lookup in app - @app.search_post
 def lookup_asin_data(asin):
     asin, title, upc, list_price, model, mpn, brand, color, rank, category, binding, is_clothing, width, height, length, weight = get_attributes(asin)
-    commission, minimum, vcf = get_commission(asin)
+    commission, minimum, vcf = get_commission(asin, category, binding, category)
     is_media = True if vcf else False
     bb_amt, new_offers, fba = offers_api(asin)
     fba = 'Y' if fba == '1' else 'N'
-    has_amz, fba_count = offers_scrape(asin)
-    has_amz = 'Y' if has_amz >= 1 else 'N'
-    if any(x == '0' for x in (width, height, length, weight)):
-        result = ['N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A']
-        vcf = 'N/A'
-    else:
-        result = calculate_fees(asin, width, height, length, weight, 100.0, commission, is_clothing, is_media)
+    feedback_count, feedback_rating, total_offers, total_fba, amz_on = get_buy_box_data(asin)
+    print(feedback_count, feedback_rating, total_offers, total_fba, amz_on)
+    result = calculate_fees(asin, width, height, length, weight, 100.0, commission, is_clothing, is_media)
 
     final = {
         'asin': asin,
@@ -45,35 +34,30 @@ def lookup_asin_data(asin):
         'fees': result[4],
         'vcf': vcf,
         'referral': commission,
-        'total': result[5],
         'width': width,
         'height': height,
         'length': length,
         'weight': weight,
         'bb_amt': bb_amt,
         'fba': fba,
+        'total_offers': total_offers,
         'new_offers': new_offers,
-        'fba_count': fba_count,
-        'has_amz': has_amz,
+        'feedback_count': feedback_count,
+        'feedback_rating': feedback_rating,
+        'total_fba': total_fba,
+        'amz_on': amz_on
     }
     return(final)
 
-# Function for multiple ASINs in csv - read.py
+# Function for scout
 def get_scout_data(asin):
     time.sleep(1)
     asin, title, upc, list_price, model, mpn, brand, color, rank, category, binding, is_clothing, width, height, length, weight = get_attributes(asin)
-    time.sleep(1)
-    commission, minimum, vcf = get_commission(asin)
+    commission, minimum, vcf = get_commission(asin, category, binding, category)
     is_media = True if vcf else False
     bb_amt, new_offers, fba = offers_api(asin)
     fba = 'Y' if fba == '1' else 'N'
-    has_amz, fba_count = offers_scrape(asin)
-    has_amz = 'Y' if has_amz >= 1 else 'N'
-    if any(x == '0' for x in (width, height, length, weight)):
-        result = ['N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A']
-        vcf = 'N/A'
-    else:
-        result = calculate_fees(asin, width, height, length, weight, 100.0, commission, is_clothing, is_media)
+    result = calculate_fees(asin, width, height, length, weight, 100.0, commission, is_clothing, is_media)
 
     return(
         asin,
@@ -99,20 +83,62 @@ def get_scout_data(asin):
         bb_amt,
         fba,
         new_offers,
-        fba_count,
-        has_amz
         )
+
+def run_bulk_asin(all_asins):
+    time.sleep(0.5)
+    query = ', '.join(all_asins)
+    result, soup = get_raw_data(query)
+    asins, widths, heights, lengths, weights, bindings, categories, product_types, is_clothings = ([] for i in range(9))
+    i = 0
+    d = {}
+    for x in soup.findAll('itemattributes'):
+        categories.append('Misc.') if x.find('productgroup').string is None else categories.append(x.find('productgroup').string)
+        product_types.append('Misc.') if x.find('producttypename').string is None else product_types.append(x.find('producttypename').string)
+        for node in soup.findAll('name'):
+            if 'Clothing' in node:
+                is_clothings.append(True)
+            else:
+                is_clothings.append(False)
+    for p in result:
+        asins.append(p.asin)
+        bindings.append('Misc.') if p.binding is None else bindings.append(p.binding)
+
+        search_dims = [
+            'PackageDimensions.Width',
+            'PackageDimensions.Height',
+            'PackageDimensions.Length',
+            'PackageDimensions.Weight',
+        ]
+        raw_dims = p.get_attributes(search_dims)
+        width = Decimal(raw_dims['PackageDimensions.Width'])/Decimal(100.0) if 'PackageDimensions.Width' in raw_dims else 0
+        height = Decimal(raw_dims['PackageDimensions.Height'])/Decimal(100.0) if 'PackageDimensions.Height' in raw_dims else 0
+        length = Decimal(raw_dims['PackageDimensions.Length'])/Decimal(100.0) if 'PackageDimensions.Length' in raw_dims else 0
+        weight = Decimal(raw_dims['PackageDimensions.Weight'])/Decimal(100.0) if 'PackageDimensions.Weight' in raw_dims else 0
+        widths.append(width)
+        heights.append(height)
+        lengths.append(length)
+        weights.append(weight)
+
+    while i < len(categories):
+    # asin, title, upc, list_price, model, mpn, brand, color, rank, category, binding, product_type, is_clothing, width, height, length, weight = get_attributes(asin)
+        commission, minimum, vcf = get_commission(asins[i], categories[i], bindings[i], product_types[i])
+        is_media = True if vcf else False
+        pick_pack, weight_handling, order_handling, thirty_day, fba_fees = calculate_fees(asins[i], widths[i], heights[i], lengths[i], weights[i], 100.0, commission, is_clothings[i], is_media, minimum, vcf)
+        d[asins[i]] = (pick_pack, weight_handling, order_handling, thirty_day, fba_fees, vcf, commission)
+        i += 1
+    return(d)
 
 def get_30_day(standard_or_oversize, cubic_foot):
     month = datetime.datetime.now().month
     if month <= 9:
         if standard_or_oversize == 'standard':
-            return Decimal(0.54) * Decimal(cubic_foot)
-        return Decimal(0.43) * Decimal(cubic_foot)
+            return Decimal(0.51) * Decimal(cubic_foot)
+        return Decimal(0.40) * Decimal(cubic_foot)
     else:
         if standard_or_oversize == 'standard':
-            return Decimal(0.72) * Decimal(cubic_foot)
-        return Decimal(0.57) * Decimal(cubic_foot)
+            return Decimal(0.68) * Decimal(cubic_foot)
+        return Decimal(0.53) * Decimal(cubic_foot)
 
 def get_standard_or_oversize(length, width, height, weight):
     # Determine if object is standard size or oversized
@@ -176,8 +202,8 @@ def get_weight_handling(product_tier, outbound, is_media=False):
         return Decimal(2.06)
     return Decimal(2.06) + (outbound - 2) * Decimal(0.39)
 
+def calculate_fees(asin, length, width, height, weight, price=0.0, commission=0.15, is_clothing=False, is_media=False, minimum=0.0, vcf=0.0):
 
-def calculate_fees(asin, length, width, height, weight, price=0.0, commission=0.15, is_clothing=False, is_media=False):
     # Calculate the FBA fees for the given variables
     length, width, height, weight = Decimal(length), Decimal(width), Decimal(height), Decimal(weight)
     price = Decimal(price)
@@ -247,6 +273,14 @@ def calculate_fees(asin, length, width, height, weight, price=0.0, commission=0.
     else:
         order_handling = Decimal(1.00)
 
+    pick_pack_const = {
+        'standard': Decimal(1.06),
+        'small_oversize': Decimal(4.09),
+        'medium_oversize': Decimal(5.20),
+        'large_oversize': Decimal(8.40),
+        'special_oversize': Decimal(10.53),
+    }
+
     pick_pack = pick_pack_const.get(standard_or_oversize, pick_pack_const.get(product_tier))
 
     if is_clothing:
@@ -259,11 +293,12 @@ def calculate_fees(asin, length, width, height, weight, price=0.0, commission=0.
     fba_fees = Decimal(pick_pack) + Decimal(weight_handling) + Decimal(thirty_day) + Decimal(order_handling)
 
     # Add the referral fees if we know how much we plan to sell the product for
-    minimum, vcf = get_commission(asin)[1:3]
+    minimum = Decimal(minimum)
+    vcf = Decimal(vcf)
     referral_fee = round(price * commission, 2)
     if minimum:
-        referral_fee = Decimal(minimum)
-    total = fba_fees + referral_fee + Decimal(vcf)
+        referral_fee = minimum
+    total = fba_fees + referral_fee + vcf
 
     return(
         str(round(pick_pack, 2)),
@@ -271,5 +306,4 @@ def calculate_fees(asin, length, width, height, weight, price=0.0, commission=0.
         str(round(order_handling, 2)),
         str(round(thirty_day, 2)),
         str(round(fba_fees, 2)),
-        str(round(total, 2))
     )

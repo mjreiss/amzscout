@@ -10,4 +10,4 @@ venv
 .project
 *.pyo
 *.rdb
-config.py
+app_config.py
