@@ -12,8 +12,9 @@ def lookup_asin_data(asin):
     bb_amt, new_offers, fba = offers_api(asin)
     fba = 'Y' if fba == '1' else 'N'
     feedback_count, feedback_rating, total_offers, total_fba, amz_on = get_buy_box_data(asin)
-    print(feedback_count, feedback_rating, total_offers, total_fba, amz_on)
-    result = calculate_fees(asin, width, height, length, weight, 100.0, commission, is_clothing, is_media)
+    pick_pack, weight_handling, order_handling, thirty_day, fba_fees = calculate_fees(asin, width, height, length, weight, 100.0, commission, is_clothing, is_media)
+    if any(x == '0' for x in [width, height, length, weight]):
+        pick_pack = weight_handling = order_handling = thirty_day = fba_fees = 'N/A'
 
     final = {
         'asin': asin,
@@ -27,11 +28,11 @@ def lookup_asin_data(asin):
         'rank': rank,
         'category': category,
         'binding': binding,
-        'pick_pack': result[0],
-        'weight_handling': result[1],
-        'order_handling': result[2],
-        '30d': result[3],
-        'fees': result[4],
+        'pick_pack': pick_pack,
+        'weight_handling': weight_handling,
+        'order_handling': order_handling,
+        '30d': thirty_day,
+        'fees': fba_fees,
         'vcf': vcf,
         'referral': commission,
         'width': width,
@@ -57,7 +58,9 @@ def get_scout_data(asin):
     is_media = True if vcf else False
     bb_amt, new_offers, fba = offers_api(asin)
     fba = 'Y' if fba == '1' else 'N'
-    result = calculate_fees(asin, width, height, length, weight, 100.0, commission, is_clothing, is_media)
+    pick_pack, weight_handling, order_handling, thirty_day, fba_fees = calculate_fees(asin, width, height, length, weight, 100.0, commission, is_clothing, is_media)
+    if any(x == '0' for x in [width, height, length, weight]):
+        pick_pack = weight_handling = order_handling = thirty_day = fba_fees = 'N/A'
 
     return(
         asin,
@@ -69,11 +72,11 @@ def get_scout_data(asin):
         color,
         rank,
         category,
-        result[0],
-        result[1],
-        result[2],
-        result[3],
-        result[4],
+        pick_pack,
+        weight_handling,
+        order_handling,
+        thirty_day,
+        fba_fees,
         vcf,
         commission,
         width,
@@ -83,7 +86,7 @@ def get_scout_data(asin):
         bb_amt,
         fba,
         new_offers,
-        )
+    )
 
 def run_bulk_asin(all_asins):
     time.sleep(0.5)

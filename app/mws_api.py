@@ -36,14 +36,16 @@ def get_buy_box_data(asin):
 			for x in soup.findAll('offer'):
 				temp_rating = x.find('sellerpositivefeedbackrating').text if x.find('sellerpositivefeedbackrating') != None else '0'
 				temp_count = x.find('feedbackcount').text if x.find('feedbackcount') != None else '0'
-				if temp_rating == '91.0' and temp_count == '387':
-					amz_on = 1
 				if x.find('isbuyboxwinner') == None:
 					feedback_rating = 'N/A'
 					feedback_count = 'N/A'
 				elif x.find('isbuyboxwinner').text == 'true':
 					feedback_rating = x.find('sellerpositivefeedbackrating').text if x.find('sellerpositivefeedbackrating') != None else '0'
 					feedback_count = x.find('feedbackcount').text if x.find('feedbackcount') != None else '0'
+				if temp_rating == '91.0' and temp_count == '387':
+					amz_on = 1
+					feedback_rating = 'AMZ'
+					feedback_count = 'AMZ'
 		amz_on = 'Y' if amz_on == 1 else 'N'
 		return(feedback_count, feedback_rating, total_offers, total_fba, amz_on)
 		c.writerow([asin, feedback_count, feedback_rating, total_offers, total_fba, amz_on])
