@@ -8,6 +8,7 @@ def run_scout(path, result_file, error_file):
     with open(path, "rt", encoding='utf8') as f:
         reader = csv.reader(f)
         header = next(reader)[0]
+        # ASIN Scout
         if header.lower() == "asin":
             c = csv.writer(open("app/files/results/" + result_file, "w"))
             e = csv.writer(open("app/files/errors/" + error_file, "w"))
