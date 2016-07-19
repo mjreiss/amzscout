@@ -1,6 +1,8 @@
+amazon-mws==0.2.3
 amazon-scraper==0.3.3
 amqp==1.4.9
 anyjson==0.3.3
+astroid==1.4.5
 bcrypt==2.0.0
 beautifulsoup4==4.4.1
 billiard==3.3.0.23
@@ -8,6 +10,7 @@ blinker==1.4
 bottlenose==0.6.3
 celery==3.1.23
 cffi==1.5.2
+colorama==0.3.7
 config==0.3.9
 decorator==4.0.9
 defusedxml==0.4.1
@@ -15,9 +18,11 @@ Flask==0.10.1
 Flask-Assets==0.11
 Flask-Mail==0.9.1
 Flask-SQLAlchemy==2.1
+gunicorn==19.6.0
 itsdangerous==0.24
 Jinja2==2.8
 kombu==3.0.34
+lazy-object-proxy==1.2.2
 lxml==3.5.0
 MarkupSafe==0.23
 numpy==1.10.4
@@ -26,6 +31,7 @@ pbr==1.8.1
 psycopg2==2.6.1
 pycparser==2.14
 pycrypto==2.6.1
+pylint==1.5.5
 python-amazon-simple-product-api==2.0.1
 python-dateutil==2.4.2
 python3-openid==3.0.9
@@ -39,4 +45,5 @@ sqlparse==0.1.19
 Tempita==0.5.2
 webassets==0.11.1
 Werkzeug==0.11.4
+wrapt==1.10.8
 xmltodict==0.10.1
