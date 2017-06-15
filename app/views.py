@@ -30,6 +30,9 @@ def search_post():
 		asin = request.form['asin']
 		if len(request.form['asin']) == 12:
 			asin = upc_to_asin(request.form['asin'])[0]
+		if len(request.form['asin']) == 13:
+			asin = ean_to_asin(request.form['asin'])[0]
+		print(asin)
 		result = lookup_asin_data(asin)
 		return render_template("lookup_results.html", data=result)
 	except urllib.error.HTTPError:

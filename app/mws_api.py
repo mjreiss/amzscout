@@ -16,11 +16,11 @@ def get_buy_box_data(asin):
 	attempts = 0
 	try:
 		time.sleep(0.5)
-		rand = randint(0,13)
+		rand = randint(0,3)
 		merchant_id = sids[rand]
 		auth_token = tokens[rand]
 		x = mws.Products(access_key=access_key, secret_key=secret_key, account_id=merchant_id, auth_token=auth_token)
-		report = x.get_lowest_priced_offers_for_asin(marketplaceid=marketplaceid, asin=asin, condition="New", excludeme="False")
+		report = x.get_lowest_priced_offers_for_asin(marketplaceid=marketplaceid, asin=asin, condition="New")
 		response_data = report.original
 		soup = BeautifulSoup(response_data, "lxml")
 		total_offers = soup.find('totaloffercount').text if soup.find('totaloffercount') != None else '0'

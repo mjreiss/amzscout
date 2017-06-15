@@ -12,9 +12,9 @@ def lookup_asin_data(asin):
     bb_amt, new_offers, fba = offers_api(asin)
     fba = 'Y' if fba == '1' else 'N'
     feedback_count, feedback_rating, total_offers, total_fba, amz_on = get_buy_box_data(asin)
-    pick_pack, weight_handling, order_handling, thirty_day, fba_fees = calculate_fees(asin, width, height, length, weight, 100.0, commission, is_clothing, is_media)
+    thirty_day, fba_fees = calculate_fees(asin, width, height, length, weight, 100.0, commission, is_clothing, is_media)
     if any(x == '0' for x in [width, height, length, weight]):
-        pick_pack = weight_handling = order_handling = thirty_day = fba_fees = 'N/A'
+        thirty_day = fba_fees = 'N/A'
 
     final = {
         'asin': asin,
@@ -28,9 +28,6 @@ def lookup_asin_data(asin):
         'rank': rank,
         'category': category,
         'binding': binding,
-        'pick_pack': pick_pack,
-        'weight_handling': weight_handling,
-        'order_handling': order_handling,
         '30d': thirty_day,
         'fees': fba_fees,
         'vcf': vcf,
@@ -58,23 +55,22 @@ def get_scout_data(asin):
     is_media = True if vcf else False
     bb_amt, new_offers, fba = offers_api(asin)
     fba = 'Y' if fba == '1' else 'N'
-    pick_pack, weight_handling, order_handling, thirty_day, fba_fees = calculate_fees(asin, width, height, length, weight, 100.0, commission, is_clothing, is_media)
+    thirty_day, fba_fees = calculate_fees(asin, width, height, length, weight, 100.0, commission, is_clothing, is_media)
+
     if any(x == '0' for x in [width, height, length, weight]):
-        pick_pack = weight_handling = order_handling = thirty_day = fba_fees = 'N/A'
+        thirty_day = fba_fees = 'N/A'
 
     return(
         asin,
         title,
-        upc,list_price,
+        upc,
+        list_price,
         model,
         mpn,
         brand,
         color,
         rank,
         category,
-        pick_pack,
-        weight_handling,
-        order_handling,
         thirty_day,
         fba_fees,
         vcf,
@@ -127,8 +123,8 @@ def run_bulk_asin(all_asins):
     # asin, title, upc, list_price, model, mpn, brand, color, rank, category, binding, product_type, is_clothing, width, height, length, weight = get_attributes(asin)
         commission, minimum, vcf = get_commission(asins[i], categories[i], bindings[i], product_types[i])
         is_media = True if vcf else False
-        pick_pack, weight_handling, order_handling, thirty_day, fba_fees = calculate_fees(asins[i], widths[i], heights[i], lengths[i], weights[i], 100.0, commission, is_clothings[i], is_media, minimum, vcf)
-        d[asins[i]] = (pick_pack, weight_handling, order_handling, thirty_day, fba_fees, vcf, commission)
+        fba_fees = calculate_fees(asins[i], widths[i], heights[i], lengths[i], weights[i], 100.0, commission, is_clothings[i], is_media, minimum, vcf)
+        d[asins[i]] = (fba_fees, vcf, commission)
         i += 1
     return(d)
 
@@ -136,12 +132,12 @@ def get_30_day(standard_or_oversize, cubic_foot):
     month = datetime.datetime.now().month
     if month <= 9:
         if standard_or_oversize == 'standard':
-            return Decimal(0.51) * Decimal(cubic_foot)
-        return Decimal(0.40) * Decimal(cubic_foot)
+            return Decimal(0.64) * Decimal(cubic_foot)
+        return Decimal(0.43) * Decimal(cubic_foot)
     else:
         if standard_or_oversize == 'standard':
-            return Decimal(0.68) * Decimal(cubic_foot)
-        return Decimal(0.53) * Decimal(cubic_foot)
+            return Decimal(2.35) * Decimal(cubic_foot)
+        return Decimal(1.15) * Decimal(cubic_foot)
 
 def get_standard_or_oversize(length, width, height, weight):
     # Determine if object is standard size or oversized
@@ -165,71 +161,18 @@ def get_girth_and_length(length, width, height):
 def get_cubic_foot(length, width, height):
     return (length * width * height) / Decimal(1728.0)
 
-def get_weight_handling(product_tier, outbound, is_media=False):
-    outbound = math.ceil(outbound)
-
-    if product_tier == 'small_standard':
-        return Decimal(0.5)
-
-    if product_tier == 'large_standard':
-        if outbound <= 1:
-            if is_media:
-                return Decimal(0.85)
-            return Decimal(0.96)
-
-        if is_media:
-            if outbound <= 2:
-                return Decimal(1.24)
-            return Decimal(1.24) + (outbound - 2) * Decimal(0.41)
-
-        if outbound <= 2:
-            return Decimal(1.95)
-        return Decimal(1.95) + (outbound - 2) * Decimal(0.39)
-
-    if product_tier == 'special_oversize':
-        if outbound <= 90:
-            return Decimal(124.58)
-        return Decimal(124.58) + (outbound - 90) * Decimal(0.80)
-
-    if product_tier == 'large_oversize':
-        if outbound <= 90:
-            return Decimal(63.98)
-        return Decimal(63.98) + (outbound - 90) * Decimal(0.80)
-
-    if product_tier == 'medium_oversize':
-        if outbound <= 2:
-            return Decimal(2.73)
-        return Decimal(2.73) + (outbound - 2) * Decimal(0.39)
-
-    if outbound <= 2:
-        return Decimal(2.06)
-    return Decimal(2.06) + (outbound - 2) * Decimal(0.39)
-
-def calculate_fees(asin, length, width, height, weight, price=0.0, commission=0.15, is_clothing=False, is_media=False, minimum=0.0, vcf=0.0):
-
-    # Calculate the FBA fees for the given variables
-    length, width, height, weight = Decimal(length), Decimal(width), Decimal(height), Decimal(weight)
-    price = Decimal(price)
-    commission = Decimal(commission)
-    dimensional_weight = get_dimensional_weight(length, width, height)
+def get_product_tier(length, width, height, weight, standard_or_oversize):
     girth_length = get_girth_and_length(length, width, height)
 
-    standard_or_oversize = get_standard_or_oversize(length, width, height, weight)
-
-    cubic_foot = get_cubic_foot(length, width, height)
-
     if standard_or_oversize == 'standard':
-        if is_media:
-            fee_weight = Decimal(0.875)
-        else:
-            fee_weight = Decimal(0.75)
+        fee_weight = Decimal(0.75)
 
         if all(
             [
-                (fee_weight >= weight),
+                (weight <= fee_weight),
                 (max(length, width, height) <= 15),
-                (min(length, width, height) <= 0.75),
-                (median([length, width, height]) <= 12)
+                (median([length, width, height]) <= 12),
+                (min(length, width, height) <= 0.75)
             ]
         ):
             product_tier = 'small_standard'
@@ -256,44 +199,116 @@ def calculate_fees(asin, length, width, height, weight, price=0.0, commission=0.
             product_tier = 'medium_oversize'
         else:
             product_tier = 'small_oversize'
+    return product_tier
 
-    if is_media:
-        outbound = weight + Decimal(0.125)
-    else:
-        if standard_or_oversize == 'standard':
-            if weight <= 1:
-                outbound = weight + Decimal(0.25)
-            else:
-                outbound = max(weight, dimensional_weight) + Decimal(0.25)
+def get_fba_fees(product_tier, outbound, is_media=False):
+    # code.interact(local=dict(globals(), **locals()))
+    outbound = math.ceil(outbound)
+    month = datetime.datetime.now().month
+
+    if product_tier == 'small_standard':
+        if month > 9:
+            return Decimal(2.39)
         else:
-            if product_tier == 'special_oversize':
-                outbound = weight + 1
+            return Decimal(2.41)
+
+    if product_tier == 'large_standard':
+        if outbound <= 1:
+            if month > 9:
+                return Decimal(2.88)
             else:
-                outbound = max(weight, dimensional_weight) + 1
+                return Decimal(2.99)
 
-    if is_media or standard_or_oversize == 'oversize':
-        order_handling = Decimal(0.00)
+        if outbound <= 2:
+            if month > 9:
+                return Decimal(3.96)
+            else:
+                return Decimal(4.18)
+
+        if outbound > 2:
+            if month > 9:
+                return Decimal(3.96) + ((outbound - 2) * Decimal(0.35))
+            else:
+                return Decimal(4.18) + (outbound - 2) * Decimal(0.39)
+
+    if product_tier == 'special_oversize':
+        if outbound <= 90:
+            if month > 9:
+                return Decimal(131.44)
+            else:
+                return Decimal(138.08)
+        else:
+            if month > 9:
+                return Decimal(131.44) + (outbound - 90) * Decimal(0.88)
+            else:
+                return Decimal(138.08) + (outbound - 90) * Decimal(0.92)
+
+    if product_tier == 'large_oversize':
+        if outbound <= 90:
+            if month > 9:
+                return Decimal(69.50)
+            else:
+                return Decimal(75.06)
+        else:
+            if month > 9:
+                return Decimal(69.50) + (outbound - 90) * Decimal(0.76)
+            else:
+                return Decimal(75.06) + (outbound - 90) * Decimal(0.80)
+
+    if product_tier == 'medium_oversize':
+        if outbound <= 2:
+            if month > 9:
+                return Decimal(8.73)
+            else:
+                return Decimal(9.20)
+        else:
+            if month > 9:
+                return Decimal(8.73) + (outbound - 2) * Decimal(0.35)
+            else:
+                return Decimal(9.20) + (outbound - 2) * Decimal(0.39)
+
+    if product_tier == 'small_oversize':
+        if outbound <= 2:
+            if month > 9:
+                return Decimal(6.69)
+            else:
+                return Decimal(6.85)
+        else:
+            if month > 9:
+                return Decimal(6.69) + (outbound - 2) * Decimal(0.35)
+            else:
+                return Decimal(6.85) + (outbound - 2) * Decimal(0.39)
+
+def calculate_fees(asin, length, width, height, weight, price=0.0, commission=0.15, is_clothing=False, is_media=False, minimum=0.0, vcf=0.0):
+
+    # Calculate the FBA fees for the given variables
+    length, width, height, weight = Decimal(length), Decimal(width), Decimal(height), Decimal(weight)
+    price = Decimal(price)
+    commission = Decimal(commission)
+    dimensional_weight = get_dimensional_weight(length, width, height)
+
+    standard_or_oversize = get_standard_or_oversize(length, width, height, weight)
+
+    cubic_foot = get_cubic_foot(length, width, height)
+    product_tier = get_product_tier(length, width, height, weight, standard_or_oversize)
+
+    if standard_or_oversize == 'standard':
+        if weight <= 1:
+            outbound = weight + Decimal(0.25)
+        else:
+            outbound = max(weight, dimensional_weight) + Decimal(0.25)
     else:
-        order_handling = Decimal(1.00)
-
-    pick_pack_const = {
-        'standard': Decimal(1.06),
-        'small_oversize': Decimal(4.09),
-        'medium_oversize': Decimal(5.20),
-        'large_oversize': Decimal(8.40),
-        'special_oversize': Decimal(10.53),
-    }
-
-    pick_pack = pick_pack_const.get(standard_or_oversize, pick_pack_const.get(product_tier))
-
-    if is_clothing:
-        pick_pack += Decimal(0.40)
-
-    weight_handling = round(get_weight_handling(product_tier, outbound, is_media), 2)
+        if product_tier == 'special_oversize':
+            outbound = weight + 1
+        else:
+            outbound = max(weight, dimensional_weight) + 1
 
     thirty_day = get_30_day(standard_or_oversize, cubic_foot)
 
-    fba_fees = Decimal(pick_pack) + Decimal(weight_handling) + Decimal(thirty_day) + Decimal(order_handling)
+    fba_fees = round(get_fba_fees(product_tier, outbound, is_media), 2)
+
+    if is_clothing:
+        fba_fees += Decimal(0.40)
 
     # Add the referral fees if we know how much we plan to sell the product for
     minimum = Decimal(minimum)
@@ -304,9 +319,6 @@ def calculate_fees(asin, length, width, height, weight, price=0.0, commission=0.
     total = fba_fees + referral_fee + vcf
 
     return(
-        str(round(pick_pack, 2)),
-        str(round(weight_handling, 2)),
-        str(round(order_handling, 2)),
         str(round(thirty_day, 2)),
         str(round(fba_fees, 2)),
     )

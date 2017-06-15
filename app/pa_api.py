@@ -24,6 +24,19 @@ def upc_to_asin(upc):
 			count += 1
 	return(asin)
 
+def ean_to_asin(ean):
+	time.sleep(1)
+	p = amazon.lookup(ItemId=ean, IdType='EAN', SearchIndex='All')
+	if type(p) != list:
+		asin = [p.asin]
+	else:
+		asin = []
+		count = 0
+		while count <= len(p) - 1:
+			asin.append(p[count].asin)
+			count += 1
+	return(asin)
+
 # part of run_bulk_asin()
 def get_raw_data(asin):
 	p = amazon.lookup(ItemId=asin, IdType='ASIN', ResponseGroup='Large')
@@ -54,6 +67,8 @@ def get_attributes(asin):
 	product_group = 'Misc.' if product_group is None else product_group
 	# Check if Clothing
 	is_clothing = False
+	if soup.findAll('clothingsize'):
+		is_clothing = True
 	for node in soup.findAll('name'):
 		if 'Clothing' in node:
 			is_clothing = True

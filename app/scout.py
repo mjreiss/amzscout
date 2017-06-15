@@ -14,7 +14,7 @@ def run_scout(path, result_file, error_file):
             e = csv.writer(open("app/files/errors/" + error_file, "w"))
             c.writerow([
                 "UPC", "ASIN", "Name", "List Price", "Model", "MPN", "Brand", "Color", "Sales Rank", "Category",
-                "Pick & Pack", "Weight Handling", "Order Handling", "30d Storage", "VCF", "FBA Fees", "Referral",
+                "30d Storage", "FBA Fees", "VCF", "Referral",
                 "Width", "Height", "Length", "Weight", "Total Offers", "New Offers", "FBA Offers", "AMZ on Listing", 
                 "Buy Box", "FBA Buy Box?", "BB Feedback Count", "BB Feedback Rating",
                 ])
@@ -24,11 +24,11 @@ def run_scout(path, result_file, error_file):
                 while attempts < 4:
                     try:
                         print("ASIN: " + str(row[0]))
-                        asin, title, upc, list_price, model, mpn, brand, color, rank, category, pick_pack, weight_handling, order_handling, thirty_day, total_fee, vcf, referral, width, height, length, weight, bb_amt, fba_bb, new_offers = get_scout_data(str(row[0]))
+                        asin, title, upc, list_price, model, mpn, brand, color, rank, category, thirty_day, total_fee, vcf, referral, width, height, length, weight, bb_amt, fba_bb, new_offers = get_scout_data(str(row[0]))
                         feedback_count, feedback_rating, total_offers, total_fba, amz_on = get_buy_box_data(str(row[0]))
                         c.writerow([
                             ("*%s" % upc), row[0], title, list_price, model, mpn, brand, color, rank, category,
-                            pick_pack, weight_handling, order_handling, thirty_day, vcf, total_fee, referral,
+                            thirty_day, total_fee, vcf, referral,
                             width, height, length, weight, total_offers, new_offers, total_fba, amz_on,
                             bb_amt, fba_bb, feedback_count, feedback_rating
                         ])
@@ -51,7 +51,7 @@ def run_scout(path, result_file, error_file):
             e = csv.writer(open("app/files/errors/" + error_file, "w"))
             c.writerow([
                 "UPC", "ASIN", "Name", "List Price", "Model", "MPN", "Brand", "Color", "Sales Rank", "Category",
-                "Pick & Pack", "Weight Handling", "Order Handling", "30d Storage", "VCF", "FBA Fees", "Referral",
+                "30d Storage", "FBA Fees", "VCF", "Referral",
                 "Width", "Height", "Length", "Weight", "Total Offers", "New Offers", "FBA Offers", "AMZ on Listing", 
                 "Buy Box", "FBA Buy Box?", "BB Feedback Count", "BB Feedback Rating",
                 ])
@@ -66,11 +66,11 @@ def run_scout(path, result_file, error_file):
                         attempts = 0
                         while attempts < 4:
                             try:
-                                asin, title, upc, list_price, model, mpn, brand, color, rank, category, pick_pack, weight_handling, order_handling, thirty_day, total_fee, vcf, referral, width, height, length, weight, bb_amt, fba_bb, new_offers = get_scout_data(x)
+                                asin, title, upc, list_price, model, mpn, brand, color, rank, category, thirty_day, total_fee, vcf, referral, width, height, length, weight, bb_amt, fba_bb, new_offers = get_scout_data(x)
                                 feedback_count, feedback_rating, total_offers, total_fba, amz_on = get_buy_box_data(x)
                                 c.writerow([
                                     ("*%s" % row[0]), asin, title, list_price, model, mpn, brand, color, rank, category,
-                                    pick_pack, weight_handling, order_handling, thirty_day, vcf, total_fee, referral,
+                                    thirty_day, total_fee, vcf, referral,
                                     width, height, length, weight, total_offers, new_offers, total_fba, amz_on,
                                     bb_amt, fba_bb, feedback_count, feedback_rating
                                 ])
