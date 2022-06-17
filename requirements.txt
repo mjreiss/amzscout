@@ -25,7 +25,7 @@ kombu==3.0.34
 lazy-object-proxy==1.2.2
 lxml==3.5.0
 MarkupSafe==0.23
-numpy==1.10.4
+numpy==1.21.0
 passlib==1.6.5
 pbr==1.8.1
 psycopg2==2.6.1
