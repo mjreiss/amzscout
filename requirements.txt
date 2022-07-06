@@ -23,7 +23,7 @@ itsdangerous==0.24
 Jinja2==2.8
 kombu==3.0.34
 lazy-object-proxy==1.2.2
-lxml==3.5.0
+lxml==4.9.1
 MarkupSafe==0.23
 numpy==1.10.4
 passlib==1.6.5
